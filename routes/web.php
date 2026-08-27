@@ -11,6 +11,7 @@ use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\ParametroController;
 use App\Http\Controllers\PrestamoController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RemateController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\UsuarioController;
@@ -27,6 +28,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Perfil de usuario
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Operativa general
     Route::resource('clientes', ClienteController::class)->except(['edit', 'update', 'destroy']);
 
     Route::resource('prestamos', PrestamoController::class)->except(['edit', 'update', 'destroy']);
@@ -49,6 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::get('notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
     Route::post('notificaciones/enviar-simulado', [NotificacionController::class, 'enviarSimulado'])->name('notificaciones.enviar');
 
+    // Administración
     Route::middleware('admin')->group(function () {
         Route::get('aprobaciones', [AprobacionController::class, 'index'])->name('aprobaciones.index');
         Route::post('aprobaciones/{solicitud}/aprobar', [AprobacionController::class, 'aprobar'])->name('aprobaciones.aprobar');
