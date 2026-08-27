@@ -9,6 +9,7 @@ Thumbs.db
 /.fleet
 /.idea
 /.nova
+/.phpunit.cache
 /.vscode
 /.zed
 /auth.json
@@ -21,3 +22,4 @@ Thumbs.db
 /vendor
 Homestead.json
 Homestead.yaml
+Sistema_Gestion_Prestamo-Empe-o
