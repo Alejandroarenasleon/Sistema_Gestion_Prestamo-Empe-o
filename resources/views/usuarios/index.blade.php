@@ -23,6 +23,7 @@
                     <th>Rol</th>
                     <th>Estado</th>
                     <th>Registro</th>
+                    <th class="text-end">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,10 +42,25 @@
                         @endif
                     </td>
                     <td>{{ $usuario->fecha_creacion?->format('d/m/Y') ?? '—' }}</td>
+                    <td class="text-end">
+                        <a href="{{ route('usuarios.edit', $usuario) }}" class="btn btn-sm btn-outline-tc" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        @if($usuario->activo && $usuario->id_usuario !== Auth::id())
+                        <form method="POST" action="{{ route('usuarios.destroy', $usuario) }}" class="d-inline"
+                              onsubmit="return confirm('¿Desactivar este usuario?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Desactivar">
+                                <i class="bi bi-person-slash"></i>
+                            </button>
+                        </form>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">No hay usuarios registrados.</td>
+                    <td colspan="6" class="text-center text-muted py-4">No hay usuarios registrados.</td>
                 </tr>
                 @endforelse
             </tbody>

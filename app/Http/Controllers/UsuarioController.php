@@ -61,4 +61,68 @@ class UsuarioController extends Controller
             ->route('usuarios.index')
             ->with('success', 'Usuario creado correctamente.');
     }
+
+    public function edit(Usuario $usuario): View
+    {
+        return view('usuarios.edit', compact('usuario'));
+    }
+
+    public function update(Request $request, Usuario $usuario): RedirectResponse
+    {
+        $datos = $request->validate([
+            'nombre_completo' => ['required', 'string', 'max:120'],
+            'login' => ['required', 'string', 'max:40', 'unique:usuario,login,' . $usuario->id_usuario . ',id_usuario'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'rol' => ['required', 'in:ADMIN,OPERADOR'],
+            'activo' => ['boolean'],
+        ]);
+
+        $anterior = $usuario->toArray();
+
+        $updateData = [
+            'nombre_completo' => $datos['nombre_completo'],
+            'login' => $datos['login'],
+            'rol' => $datos['rol'],
+            'activo' => $request->boolean('activo', true),
+        ];
+
+        if (! empty($datos['password'])) {
+            $updateData['password_hash'] = Hash::make($datos['password']);
+        }
+
+        $usuario->update($updateData);
+
+        $this->auditoriaService->log(
+            Auth::id(),
+            'usuario',
+            $usuario->id_usuario,
+            'MODIFICAR',
+            $anterior,
+            $usuario->fresh()->toArray(),
+        );
+
+        return redirect()
+            ->route('usuarios.index')
+            ->with('success', 'Usuario actualizado correctamente.');
+    }
+
+    public function destroy(Usuario $usuario): RedirectResponse
+    {
+        $anterior = $usuario->toArray();
+
+        $usuario->update(['activo' => false]);
+
+        $this->auditoriaService->log(
+            Auth::id(),
+            'usuario',
+            $usuario->id_usuario,
+            'MODIFICAR',
+            $anterior,
+            $usuario->fresh()->toArray(),
+        );
+
+        return redirect()
+            ->route('usuarios.index')
+            ->with('success', 'Usuario desactivado correctamente.');
+    }
 }

@@ -1,6 +1,5 @@
 *.log
 .DS_Store
-Thumbs.db
 .env
 .env.backup
 .env.production
@@ -22,4 +21,4 @@ Thumbs.db
 /vendor
 Homestead.json
 Homestead.yaml
-Sistema_Gestion_Prestamo-Empe-o
+Thumbs.db
