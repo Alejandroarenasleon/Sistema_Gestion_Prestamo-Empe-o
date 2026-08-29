@@ -124,4 +124,4 @@ php artisan schedule:work          # Recordatorios automáticos (V1 simulado)
 ## Equipo
 
 Proyecto académico Trueque Cash — Tarija, Bolivia  
-Jhoel · Adriana · Josue · Jair
+Alejandro · Adriana · Josue · Jair
