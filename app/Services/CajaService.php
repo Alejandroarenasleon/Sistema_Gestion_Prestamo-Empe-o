@@ -6,6 +6,7 @@ use App\Models\CierreCaja;
 use App\Models\Pago;
 use App\Models\Prestamo;
 use App\Models\Remate;
+use App\Services\AuditoriaService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

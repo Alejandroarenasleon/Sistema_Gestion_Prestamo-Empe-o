@@ -153,4 +153,46 @@
         @endforelse
     </div>
 </div>
+
+@php
+    $rematesCliente = \App\Models\Remate::query()
+        ->with(['prenda', 'usuarioAprobo'])
+        ->whereHas('prenda.prestamo', fn ($q) => $q->where('id_cliente', $cliente->id_cliente))
+        ->orderByDesc('fecha_venta')
+        ->get();
+@endphp
+
+@if($rematesCliente->isNotEmpty())
+<div class="card card-tc mt-4">
+    <div class="card-header"><i class="bi bi-hammer me-1"></i> Ventas en Remate (Ganancia / Pérdida)</div>
+    <div class="table-responsive">
+        <table class="table table-hover table-tc mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Prenda</th>
+                    <th>Categoría</th>
+                    <th>Precio Venta</th>
+                    <th>Resultado</th>
+                    <th>Comprador</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($rematesCliente as $remate)
+                <tr>
+                    <td>{{ $remate->fecha_venta?->format('d/m/Y') ?? '—' }}</td>
+                    <td>{{ $remate->prenda->descripcion ?? '—' }}</td>
+                    <td>{{ $remate->categoria ?? '—' }}</td>
+                    <td>Bs. {{ number_format($remate->precio_venta, 2) }}</td>
+                    <td class="fw-semibold @if($remate->resultado < 0) text-danger @else text-success @endif">
+                        Bs. {{ number_format($remate->resultado, 2) }}
+                    </td>
+                    <td>{{ $remate->comprador ?? '—' }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
 @endsection

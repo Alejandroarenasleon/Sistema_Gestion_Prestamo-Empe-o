@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SolicitudAprobacion extends Model
 {
@@ -40,5 +41,15 @@ class SolicitudAprobacion extends Model
     public function usuarioResolvio(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'id_usuario_resolvio', 'id_usuario');
+    }
+
+    public function avisoRemate(): HasOne
+    {
+        return $this->hasOne(AvisoRemate::class, 'id_prenda', 'referencia_id');
+    }
+
+    public function prenda(): BelongsTo
+    {
+        return $this->belongsTo(Prenda::class, 'referencia_id', 'id_prenda');
     }
 }

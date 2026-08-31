@@ -15,6 +15,7 @@ class Remate extends Model
 
     protected $fillable = [
         'id_prenda',
+        'categoria',
         'precio_venta',
         'comprador',
         'resultado',

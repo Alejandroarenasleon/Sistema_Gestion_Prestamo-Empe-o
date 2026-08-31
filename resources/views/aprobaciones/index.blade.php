@@ -28,6 +28,13 @@
                     <td>{{ $solicitud->id_solicitud }}</td>
                     <td>
                         <span class="badge bg-secondary">{{ $solicitud->tipo }}</span>
+                        @if($solicitud->tipo === 'VENTA_PRENDA' && $solicitud->avisoRemate)
+                        @php $adeudado = $solicitud->prenda?->prestamo?->saldoTotal() ?? 0; @endphp
+                        <div class="small text-muted mt-1">
+                            Prec. ofertado: <strong>Bs. {{ number_format($solicitud->avisoRemate->precio_ofertado, 2) }}</strong><br>
+                            Adeudado: Bs. {{ number_format($adeudado, 2) }}
+                        </div>
+                        @endif
                     </td>
                     <td>#{{ $solicitud->referencia_id }}</td>
                     <td>{{ $solicitud->usuarioSolicito?->nombre_completo ?? '—' }}</td>

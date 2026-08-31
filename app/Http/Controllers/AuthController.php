@@ -14,7 +14,7 @@ class AuthController extends Controller
 {
     public function showLogin(): View
     {
-        return view('auth.login');
+        return view('auth/login');
     }
 
     public function login(Request $request): RedirectResponse
