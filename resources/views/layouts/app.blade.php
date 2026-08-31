@@ -326,6 +326,65 @@
             document.getElementById('sidebar').classList.remove('show');
             this.classList.remove('show');
         });
+
+        // Utilidad global: solo números y caracteres permitidos en campos numéricos
+        window.NumericFilter = {
+            // Solo dígitos (para montos, pesos, etc.)
+            soloDigitos: function (e) {
+                const key = e.key;
+                if (key.length === 1 && !/[0-9]/.test(key)) {
+                    e.preventDefault();
+                }
+            },
+            // Dígitos + punto decimal (para montos con decimales)
+            decimales: function (e) {
+                const key = e.key;
+                const input = e.target;
+                if (key.length === 1 && !/[0-9.]/.test(key)) {
+                    e.preventDefault();
+                }
+                // Solo un punto decimal
+                if (key === '.' && input.value.includes('.')) {
+                    e.preventDefault();
+                }
+            },
+            // Celular: dígitos + + - ( ) espacio
+            celular: function (e) {
+                const key = e.key;
+                if (key.length === 1 && !/[0-9+\-\s()]/.test(key)) {
+                    e.preventDefault();
+                }
+            },
+            // Inicializar en todos los inputs con data-numeric
+            init: function () {
+                document.querySelectorAll('[data-numeric="digits"]').forEach(function (el) {
+                    el.addEventListener('keydown', window.NumericFilter.soloDigitos);
+                    el.addEventListener('paste', function (e) {
+                        const text = (e.clipboardData || window.clipboardData).getData('text');
+                        if (!/^\d+$/.test(text)) e.preventDefault();
+                    });
+                });
+                document.querySelectorAll('[data-numeric="decimal"]').forEach(function (el) {
+                    el.addEventListener('keydown', window.NumericFilter.decimales);
+                    el.addEventListener('paste', function (e) {
+                        const text = (e.clipboardData || window.clipboardData).getData('text');
+                        if (!/^[\d.]+$/.test(text)) e.preventDefault();
+                    });
+                });
+                document.querySelectorAll('[data-numeric="celular"]').forEach(function (el) {
+                    el.addEventListener('keydown', window.NumericFilter.celular);
+                    el.addEventListener('paste', function (e) {
+                        const text = (e.clipboardData || window.clipboardData).getData('text');
+                        if (!/^[0-9+\-\s()]+$/.test(text)) e.preventDefault();
+                    });
+                });
+            }
+        };
+
+        // Auto-inicializar al cargar
+        document.addEventListener('DOMContentLoaded', function () {
+            window.NumericFilter.init();
+        });
     </script>
     @stack('scripts')
 </body>

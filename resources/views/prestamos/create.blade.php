@@ -40,7 +40,8 @@
                 <div class="col-md-3">
                     <label for="monto_capital" class="form-label">Capital (Bs.) <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" min="1" class="form-control @error('monto_capital') is-invalid @enderror"
-                           id="monto_capital" name="monto_capital" value="{{ old('monto_capital') }}" required>
+                           id="monto_capital" name="monto_capital" value="{{ old('monto_capital') }}" required
+                           data-numeric="decimal">
                     @error('monto_capital')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
@@ -48,7 +49,8 @@
                     <label for="tasa_interes_mensual" class="form-label">Tasa Mensual (%) <span class="text-danger">*</span></label>
                     <input type="number" step="0.01" min="0" class="form-control @error('tasa_interes_mensual') is-invalid @enderror"
                            id="tasa_interes_mensual" name="tasa_interes_mensual"
-                           value="{{ old('tasa_interes_mensual', \App\Models\Parametro::getValor('TASA_INTERES_DEFAULT', '10')) }}" required>
+                           value="{{ old('tasa_interes_mensual', \App\Models\Parametro::getValor('TASA_INTERES_DEFAULT', '10')) }}" required
+                           data-numeric="decimal">
                     @error('tasa_interes_mensual')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
@@ -100,7 +102,7 @@
         <div class="row g-2">
             <div class="col-md-3">
                 <label class="form-label">Categoría *</label>
-                <select class="form-select" name="prendas[__INDEX__][categoria]" required>
+                <select class="form-select categoria-select" name="prendas[__INDEX__][categoria]" required>
                     <option value="">Seleccione...</option>
                     <option value="ORO">Oro / Joyas</option>
                     <option value="ELECTRONICO">Electrónico</option>
@@ -115,11 +117,11 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label">Avalúo (Bs.) *</label>
-                <input type="number" step="0.01" min="0" class="form-control" name="prendas[__INDEX__][avaluo]" required>
+                <input type="number" step="0.01" min="0" class="form-control" name="prendas[__INDEX__][avaluo]" required data-numeric="decimal">
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2 campo-peso">
                 <label class="form-label">Peso (g)</label>
-                <input type="number" step="0.01" min="0" class="form-control" name="prendas[__INDEX__][peso_gramos]">
+                <input type="number" step="0.01" min="0" class="form-control" name="prendas[__INDEX__][peso_gramos]" data-numeric="decimal">
             </div>
             <div class="col-md-3">
                 <label class="form-label">Marca</label>
@@ -133,7 +135,7 @@
                 <label class="form-label">Material</label>
                 <input type="text" class="form-control" name="prendas[__INDEX__][material]" maxlength="60">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 campo-serie">
                 <label class="form-label">Serie / IMEI</label>
                 <input type="text" class="form-control" name="prendas[__INDEX__][numero_serie_imei]" maxlength="60">
             </div>
@@ -167,8 +169,46 @@
             row.remove();
             renumberPrendas();
         });
+        // Add event listener for category change
+        const categoriaSelect = row.querySelector('.categoria-select');
+        categoriaSelect.addEventListener('change', function () {
+            toggleFieldsByCategoria(this);
+        });
+        // Initialize fields based on default category (if any)
+        toggleFieldsByCategoria(categoriaSelect);
         container.appendChild(row);
         prendaIndex++;
+    }
+
+    function toggleFieldsByCategoria(select) {
+        const row = select.closest('.prenda-row');
+        const categoria = select.value;
+        const campoPeso = row.querySelector('.campo-peso');
+        const campoSerie = row.querySelector('.campo-serie');
+        const pesoInput = campoPeso ? campoPeso.querySelector('input') : null;
+        const serieInput = campoSerie ? campoSerie.querySelector('input') : null;
+
+        // Hide both by default
+        if (campoPeso) campoPeso.style.display = 'none';
+        if (campoSerie) campoSerie.style.display = 'none';
+        if (pesoInput) pesoInput.removeAttribute('required');
+        if (serieInput) serieInput.removeAttribute('required');
+
+        // Show based on category
+        if (categoria === 'ORO') {
+            if (campoPeso) campoPeso.style.display = 'block';
+            if (pesoInput) pesoInput.setAttribute('required', 'required');
+        } else if (categoria === 'ELECTRONICO' || categoria === 'HERRAMIENTA') {
+            if (campoSerie) campoSerie.style.display = 'block';
+            if (serieInput) serieInput.setAttribute('required', 'required');
+        } else if (categoria === 'VEHICULO') {
+            if (campoSerie) campoSerie.style.display = 'block';
+            if (serieInput) serieInput.setAttribute('required', 'required');
+        } else if (categoria === 'OTRO') {
+            // For OTRO, show both as optional
+            if (campoPeso) campoPeso.style.display = 'block';
+            if (campoSerie) campoSerie.style.display = 'block';
+        }
     }
 
     function renumberPrendas() {

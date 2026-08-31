@@ -40,11 +40,14 @@
                     @error('direccion')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4">
+<div class="col-md-4">
                     <label for="celular" class="form-label">Celular <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control @error('celular') is-invalid @enderror"
-                           id="celular" name="celular" value="{{ old('celular') }}" required maxlength="20">
+                    <input type="tel" class="form-control @error('celular') is-invalid @enderror"
+                           id="celular" name="celular" value="{{ old('celular') }}" required maxlength="20"
+                           pattern="[0-9+\-\s()]+" title="Solo números, +, -, espacios y paréntesis"
+                           data-numeric="celular">
                     @error('celular')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-text">Solo números, +, -, espacios y paréntesis</div>
                 </div>
 
                 <div class="col-md-6">

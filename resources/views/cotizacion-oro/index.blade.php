@@ -28,7 +28,8 @@
                     <div class="mb-3">
                         <label for="precio_gramo" class="form-label">Precio por Gramo (Bs.)</label>
                         <input type="number" step="0.01" min="0.01" class="form-control @error('precio_gramo') is-invalid @enderror"
-                               id="precio_gramo" name="precio_gramo" value="{{ old('precio_gramo') }}" required>
+                               id="precio_gramo" name="precio_gramo" value="{{ old('precio_gramo') }}" required
+                               data-numeric="decimal">
                         @error('precio_gramo')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="mb-3">

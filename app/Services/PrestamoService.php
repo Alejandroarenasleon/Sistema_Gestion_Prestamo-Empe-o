@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\AvisoRemate;
 use App\Models\Pago;
 use App\Models\Parametro;
 use App\Models\Prenda;
 use App\Models\Prestamo;
-use App\Models\SolicitudAprobacion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -66,46 +64,69 @@ class PrestamoService
             $prestamo->refresh();
 
             $saldoCapital = $prestamo->saldoCapital();
+            $interesPendiente = $prestamo->interesPendiente();
             $interesPeriodo = $this->calcularInteresPeriodo($prestamo);
+
             $nuevoSaldoCapital = $saldoCapital;
+            $nuevoInteresPendiente = $interesPendiente;
             $nuevaFechaVencimiento = null;
+            $capitalPagado = 0.0;
+            $interesPagadoReal = 0.0;
 
             match ($tipo) {
-                'INTERES' => null,
-                'ABONO' => $nuevoSaldoCapital = max(0, round($saldoCapital - $monto, 2)),
-                'CANCELACION' => $nuevoSaldoCapital = 0,
-                'RENOVACION' => $nuevaFechaVencimiento = $prestamo->fecha_vencimiento->copy()->addMonth(),
+                'INTERES' => [
+                    $interesPagadoReal = min($monto, $interesPendiente),
+                    $nuevoInteresPendiente = max(0, $interesPendiente - $monto),
+                ],
+                'ABONO' => [
+                    // Primero paga interés pendiente, resto va a capital
+                    $interesPagadoReal = min($monto, $interesPendiente),
+                    $resto = $monto - $interesPagadoReal,
+                    $capitalPagado = min($resto, $saldoCapital),
+                    $nuevoInteresPendiente = max(0, $interesPendiente - $interesPagadoReal),
+                    $nuevoSaldoCapital = max(0, round($saldoCapital - $capitalPagado, 2)),
+                ],
+                'CANCELACION' => [
+                    // Paga todo: interés + capital
+                    $interesPagadoReal = $interesPendiente,
+                    $capitalPagado = $saldoCapital,
+                    $nuevoInteresPendiente = 0,
+                    $nuevoSaldoCapital = 0,
+                ],
+                'RENOVACION' => [
+                    // Paga interés del período completo y extiende 1 mes
+                    $interesPagadoReal = $interesPeriodo,
+                    $nuevoInteresPendiente = max(0, $interesPendiente - $interesPeriodo),
+                    $nuevaFechaVencimiento = $prestamo->fecha_vencimiento->copy()->addMonth(),
+                ],
             };
 
             $pago = $prestamo->pagos()->create([
                 'id_usuario' => $usuarioId,
                 'tipo' => $tipo,
                 'monto' => $monto,
-                'interes_periodo_calculado' => in_array($tipo, ['INTERES', 'RENOVACION', 'CANCELACION'], true)
-                    ? $interesPeriodo
-                    : null,
-                'saldo_capital_resultante' => $nuevoSaldoCapital,
+                'interes_periodo_calculado' => $interesPeriodo,
+                'interes_pagado_real' => round($interesPagadoReal, 2),
+                'capital_pagado_real' => round($capitalPagado, 2),
+                'saldo_capital_resultante' => round($nuevoSaldoCapital, 2),
                 'nueva_fecha_vencimiento' => $nuevaFechaVencimiento,
                 'fecha' => now(),
             ]);
 
-            if ($tipo === 'RENOVACION' && $nuevaFechaVencimiento !== null) {
+            // Actualizar estado del préstamo
+            if ($nuevoSaldoCapital <= 0 && $tipo === 'CANCELACION') {
+                $prestamo->update(['estado' => 'CANCELADO']);
+                foreach ($prestamo->prendas as $prenda) {
+                    $prenda->cambiarEstado('DEVUELTA', 'Cancelación total del préstamo', $usuarioId);
+                }
+            } elseif ($tipo === 'RENOVACION' && $nuevaFechaVencimiento !== null) {
                 $prestamo->update([
                     'fecha_vencimiento' => $nuevaFechaVencimiento,
                     'estado' => 'RENOVADO',
                 ]);
-
                 foreach ($prestamo->prendas as $prenda) {
                     $prenda->cambiarEstado('RENOVADA', 'Renovación de préstamo', $usuarioId);
                     $prenda->cambiarEstado('VIGENTE', 'Renovación activa', $usuarioId);
-                }
-            }
-
-            if ($tipo === 'CANCELACION') {
-                $prestamo->update(['estado' => 'CANCELADO']);
-
-                foreach ($prestamo->prendas as $prenda) {
-                    $prenda->cambiarEstado('DEVUELTA', 'Cancelación total del préstamo', $usuarioId);
                 }
             }
 
@@ -177,38 +198,8 @@ class PrestamoService
         foreach ($prendasRemate as $prenda) {
             $prenda->cambiarEstado('DISPONIBLE_REMATE', 'Periodo de gracia cumplido', null);
             $actualizados++;
-
-            $this->generarAvisoRematePendiente($prenda);
         }
 
         return $actualizados;
-    }
-
-    /**
-     * US-14: cuando el sistema genera el aviso de remate, queda pendiente de
-     * aprobación del administrador y NO se envía automáticamente.
-     */
-    private function generarAvisoRematePendiente(Prenda $prenda): void
-    {
-        $yaExiste = AvisoRemate::query()
-            ->where('id_prenda', $prenda->id_prenda)
-            ->where('aprobado', null)
-            ->exists();
-
-        if ($yaExiste) {
-            return;
-        }
-
-        AvisoRemate::create([
-            'id_prenda' => $prenda->id_prenda,
-            'aprobado' => null,
-        ]);
-
-        SolicitudAprobacion::create([
-            'tipo' => 'AVISO_REMATE',
-            'referencia_id' => $prenda->id_prenda,
-            'id_usuario_solicito' => null,
-            'estado' => 'PENDIENTE',
-        ]);
     }
 }

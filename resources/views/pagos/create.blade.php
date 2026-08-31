@@ -42,7 +42,7 @@
                         <label for="tipo" class="form-label">Tipo de Cobro <span class="text-danger">*</span></label>
                         <select class="form-select @error('tipo') is-invalid @enderror" id="tipo" name="tipo" required>
                             <option value="">Seleccione...</option>
-                            @foreach(['INTERES' => 'Pago de Interés', 'ABONO' => 'Abono a Capital', 'CANCELACION' => 'Cancelación Total', 'RENOVACION' => 'Renovación'] as $val => $label)
+                            @foreach($tiposDisponibles as $val => $label)
                             <option value="{{ $val }}" @selected(old('tipo') === $val)>{{ $label }}</option>
                             @endforeach
                         </select>
@@ -52,7 +52,8 @@
                     <div class="mb-3">
                         <label for="monto" class="form-label">Monto (Bs.) <span class="text-danger">*</span></label>
                         <input type="number" step="0.01" min="0.01" class="form-control @error('monto') is-invalid @enderror"
-                               id="monto" name="monto" value="{{ old('monto') }}" required>
+                               id="monto" name="monto" value="{{ old('monto') }}" required
+                               data-numeric="decimal">
                         @error('monto')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
