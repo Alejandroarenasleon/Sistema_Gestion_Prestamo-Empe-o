@@ -91,23 +91,6 @@
             </div>
         </div>
     </div>
-
-    <div class="col-sm-6 col-xl-3">
-        <div class="card card-tc stat-card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <p class="text-muted mb-1 small text-uppercase">Resultado Remates</p>
-                        <div class="stat-value @if($resultadoRemates < 0) text-danger @else text-success @endif">Bs. {{ number_format($resultadoRemates, 2) }}</div>
-                    </div>
-                    <div class="rounded-circle p-2 bg-info bg-opacity-25">
-                        <i class="bi bi-graph-up fs-4 text-info"></i>
-                    </div>
-                </div>
-                <span class="small text-muted">Ganancia / pérdida acumulada</span>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="row g-3">

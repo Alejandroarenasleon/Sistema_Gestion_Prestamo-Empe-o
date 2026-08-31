@@ -72,6 +72,14 @@ class PrestamoController extends Controller
             'prendas.*.avaluo' => ['required', 'numeric', 'min:0'],
             'prendas.*.fotos' => ['nullable', 'array'],
             'prendas.*.fotos.*' => ['image', 'max:5120'],
+        ], [
+            'prendas.required' => 'Debe agregar al menos una prenda en garantía.',
+            'prendas.min' => 'Debe agregar al menos una prenda en garantía.',
+            'prendas.*.categoria.required' => 'La categoría de la prenda es obligatoria.',
+            'prendas.*.descripcion.required' => 'La descripción de la prenda es obligatoria.',
+            'prendas.*.avaluo.required' => 'El avalúo de la prenda es obligatorio.',
+            'prendas.*.avaluo.numeric' => 'El avalúo debe ser un número válido.',
+            'prendas.*.peso_gramos.numeric' => 'El peso debe ser un número válido.',
         ]);
 
         foreach ($request->input('prendas', []) as $index => $prendaData) {

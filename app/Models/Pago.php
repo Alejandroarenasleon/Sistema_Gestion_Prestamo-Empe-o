@@ -20,6 +20,8 @@ class Pago extends Model
         'tipo',
         'monto',
         'interes_periodo_calculado',
+        'interes_pagado_real',
+        'capital_pagado_real',
         'saldo_capital_resultante',
         'nueva_fecha_vencimiento',
         'fecha',
@@ -30,6 +32,8 @@ class Pago extends Model
         return [
             'monto' => 'decimal:2',
             'interes_periodo_calculado' => 'decimal:2',
+            'interes_pagado_real' => 'decimal:2',
+            'capital_pagado_real' => 'decimal:2',
             'saldo_capital_resultante' => 'decimal:2',
             'nueva_fecha_vencimiento' => 'date',
             'fecha' => 'datetime',

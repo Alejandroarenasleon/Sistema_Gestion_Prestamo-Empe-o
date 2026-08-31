@@ -61,7 +61,7 @@
                                             <p class="text-muted small">{{ $prenda->descripcion }} — Adeudado: Bs. {{ number_format($adeudado, 2) }}</p>
                                             <div class="mb-3">
                                                 <label class="form-label">Precio Ofertado (Bs.)</label>
-                                                <input type="number" step="0.01" min="0.01" name="precio_ofertado" class="form-control" required>
+                                                <input type="number" step="0.01" min="0.01" name="precio_ofertado" class="form-control" required data-numeric="decimal">
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -92,7 +92,7 @@
                                             <p class="text-muted small">{{ $prenda->descripcion }} — Adeudado: Bs. {{ number_format($adeudado, 2) }}</p>
                                             <div class="mb-3">
                                                 <label class="form-label">Precio de Venta (Bs.)</label>
-                                                <input type="number" step="0.01" min="0.01" name="precio_venta" class="form-control" required>
+                                                <input type="number" step="0.01" min="0.01" name="precio_venta" class="form-control" required data-numeric="decimal">
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Comprador</label>

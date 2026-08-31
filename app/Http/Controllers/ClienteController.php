@@ -8,6 +8,7 @@ use App\Services\ClienteService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ClienteController extends Controller
@@ -42,21 +43,33 @@ class ClienteController extends Controller
             'ci' => ['required', 'string', 'max:20', 'unique:cliente,ci'],
             'nombre_completo' => ['required', 'string', 'max:150'],
             'direccion' => ['nullable', 'string', 'max:200'],
-            'celular' => ['required', 'string', 'max:20'],
+            'celular' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s()]+$/'],
             'referencia_contacto' => ['nullable', 'string', 'max:150'],
             'foto_ci_anverso' => ['required', 'image', 'max:5120'],
             'foto_ci_reverso' => ['required', 'image', 'max:5120'],
             'comprobante_domicilio' => ['nullable', 'file', 'max:5120'],
+        ], [
+            'celular.regex' => 'El celular solo puede contener números, espacios, guiones, paréntesis y el signo +.',
         ]);
 
-        $datos['foto_ci_anverso'] = $request->file('foto_ci_anverso')
-            ->store('clientes/ci', 'public');
-        $datos['foto_ci_reverso'] = $request->file('foto_ci_reverso')
-            ->store('clientes/ci', 'public');
+        try {
+            // Asegurar que los directorios existen
+            Storage::disk('public')->makeDirectory('clientes/ci');
+            Storage::disk('public')->makeDirectory('clientes/domicilio');
 
-        if ($request->hasFile('comprobante_domicilio')) {
-            $datos['comprobante_domicilio'] = $request->file('comprobante_domicilio')
-                ->store('clientes/domicilio', 'public');
+            $datos['foto_ci_anverso'] = $request->file('foto_ci_anverso')
+                ->store('clientes/ci', 'public');
+            $datos['foto_ci_reverso'] = $request->file('foto_ci_reverso')
+                ->store('clientes/ci', 'public');
+
+            if ($request->hasFile('comprobante_domicilio')) {
+                $datos['comprobante_domicilio'] = $request->file('comprobante_domicilio')
+                    ->store('clientes/domicilio', 'public');
+            }
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Error al subir archivos: ' . $e->getMessage());
         }
 
         $cliente = Cliente::create($datos);
