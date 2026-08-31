@@ -43,12 +43,35 @@
                         Bs. {{ number_format($adeudado, 2) }}
                     </td>
                     <td class="text-end">
-                        <form method="POST" action="{{ route('remates.solicitar', $prenda) }}" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Solicitar venta">
-                                <i class="bi bi-send"></i> Solicitar
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
+                                data-bs-target="#modalSolicitar{{ $prenda->id_prenda }}" title="Proponer venta">
+                            <i class="bi bi-send"></i> Solicitar
+                        </button>
+
+                        <div class="modal fade" id="modalSolicitar{{ $prenda->id_prenda }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content text-start">
+                                    <form method="POST" action="{{ route('remates.solicitar', $prenda) }}">
+                                        @csrf
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Proponer Venta en Remate</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p class="text-muted small">{{ $prenda->descripcion }} — Adeudado: Bs. {{ number_format($adeudado, 2) }}</p>
+                                            <div class="mb-3">
+                                                <label class="form-label">Precio Ofertado (Bs.)</label>
+                                                <input type="number" step="0.01" min="0.01" name="precio_ofertado" class="form-control" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-warning">Enviar a Aprobación</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
 
                         @if(Auth::user()->isAdmin())
                         <button type="button" class="btn btn-sm btn-tc-primary" data-bs-toggle="modal"
@@ -58,7 +81,7 @@
 
                         <div class="modal fade" id="modalRegistrar{{ $prenda->id_prenda }}" tabindex="-1">
                             <div class="modal-dialog">
-                                <div class="modal-content">
+                                <div class="modal-content text-start">
                                     <form method="POST" action="{{ route('remates.registrar', $prenda) }}">
                                         @csrf
                                         <div class="modal-header">

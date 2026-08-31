@@ -19,7 +19,17 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => redirect()->route('login'));
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::get('/login', function () {
+        if (view()->exists('auth.login')) {
+            return view('auth.login');
+        }
+        if (view()->exists('auth/login')) {
+            return view('auth/login');
+        }
+
+        return "Error: Laravel no encuentra las vistas. Está buscando en la carpeta: " . resource_path('views');
+    })->name('login');
+
     Route::post('/login', [AuthController::class, 'login']);
 });
 

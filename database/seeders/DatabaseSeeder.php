@@ -36,7 +36,10 @@ class DatabaseSeeder extends Seeder
             ['clave' => 'PORCENTAJE_PRESTAMO_ELECTRONICOS', 'valor' => '35', 'descripcion' => 'Porcentaje máximo sobre avalúo para electrónicos/herramientas'],
             ['clave' => 'UMBRAL_DOCUMENTOS_EXTRA', 'valor' => '3000', 'descripcion' => 'Monto (Bs) que exige referencia o comprobante de domicilio'],
             ['clave' => 'DIAS_GRACIA', 'valor' => '15', 'descripcion' => 'Días de gracia tras mora antes de remate'],
-            ['clave' => 'RECORDATORIO_DIAS_ANTES', 'valor' => '3', 'descripcion' => 'Días antes del vencimiento para recordatorio'],
+            ['clave' => 'RECORDATORIO_DIAS_ANTES', 'valor' => '3', 'descripcion' => 'Anticipación (días antes del vencimiento) para recordatorio de vencimiento'],
+            ['clave' => 'RECORDATORIO_MISMO_DIA', 'valor' => '1', 'descripcion' => 'Enviar recordatorio el mismo día del vencimiento (1=si, 0=no)'],
+            ['clave' => 'RECORDATORIO_DIAS_MORA', 'valor' => '3', 'descripcion' => 'Días en mora para enviar aviso de mora'],
+            ['clave' => 'AVISO_FIRME_DIAS_MORA', 'valor' => '15', 'descripcion' => 'Días en mora para aviso firme de remate'],
         ];
 
         foreach ($parametros as $p) {

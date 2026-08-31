@@ -84,9 +84,14 @@ class ReporteController extends Controller
         $totalVentas = $remates->sum('precio_venta');
         $totalResultado = $remates->sum('resultado');
 
+        $perdidasPorCategoria = $remates
+            ->where('resultado', '<', 0)
+            ->groupBy('categoria')
+            ->map(fn ($grupo) => $grupo->sum('resultado'));
+
         return [
             'reportes.pdf.remates',
-            compact('remates', 'desde', 'hasta', 'totalVentas', 'totalResultado'),
+            compact('remates', 'desde', 'hasta', 'totalVentas', 'totalResultado', 'perdidasPorCategoria'),
             'remates',
         ];
     }

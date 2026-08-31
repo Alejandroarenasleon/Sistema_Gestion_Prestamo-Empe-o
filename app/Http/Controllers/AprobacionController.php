@@ -20,7 +20,7 @@ class AprobacionController extends Controller
     public function index(): View
     {
         $solicitudes = SolicitudAprobacion::query()
-            ->with(['usuarioSolicito', 'usuarioResolvio'])
+            ->with(['usuarioSolicito', 'usuarioResolvio', 'avisoRemate', 'prenda.prestamo.cliente'])
             ->orderByRaw("CASE estado WHEN 'PENDIENTE' THEN 0 ELSE 1 END")
             ->orderByDesc('fecha_solicitud')
             ->paginate(20);
@@ -93,7 +93,8 @@ class AprobacionController extends Controller
     {
         match ($solicitud->tipo) {
             'PRESTAMO_RIESGO' => $this->resolverPrestamoRiesgo($solicitud, $aprobado),
-            'VENTA_PRENDA', 'AVISO_REMATE' => $this->resolverAvisoRemate($solicitud, $aprobado),
+            'AVISO_REMATE' => $this->resolverAvisoRemate($solicitud, $aprobado),
+            'VENTA_PRENDA' => $this->resolverVentaPrenda($solicitud, $aprobado),
             default => null,
         };
     }
@@ -122,6 +123,44 @@ class AprobacionController extends Controller
 
     private function resolverAvisoRemate(SolicitudAprobacion $solicitud, bool $aprobado): void
     {
+        $aviso = \App\Models\AvisoRemate::query()
+            ->where('id_prenda', $solicitud->referencia_id)
+            ->latest('fecha_solicitud')
+            ->first();
+
+        if (! $aviso) {
+            return;
+        }
+
+        $aviso->update([
+            'aprobado' => $aprobado,
+            'id_usuario_aprobo' => Auth::id(),
+            'fecha_aprobacion' => now(),
+        ]);
+
+        // US-14: sólo al aprobar se envía (simulado) el aviso al cliente.
+        if ($aprobado) {
+            $prenda = $aviso->prenda;
+            $cliente = $prenda?->prestamo?->cliente;
+
+            if ($cliente) {
+                $plantilla = \App\Models\PlantillaMensaje::where('tipo_aviso', 'AVISO_REMATE')->where('activo', true)->first();
+
+                app(\App\Services\NotificacionService::class)->enviarSimulado(
+                    $cliente,
+                    $prenda->prestamo,
+                    $plantilla,
+                    'WHATSAPP',
+                    'AVISO_REMATE',
+                );
+            }
+        }
+    }
+
+    private function resolverVentaPrenda(SolicitudAprobacion $solicitud, bool $aprobado): void
+    {
+        // US-16: la aprobación/rechazo queda registrada en la solicitud. El
+        // rechazo deja la prenda en DISPONIBLE_REMATE a la espera de otra oferta.
         $aviso = \App\Models\AvisoRemate::query()
             ->where('id_prenda', $solicitud->referencia_id)
             ->latest('fecha_solicitud')

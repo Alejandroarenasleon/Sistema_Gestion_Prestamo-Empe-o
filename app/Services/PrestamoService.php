@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\AvisoRemate;
 use App\Models\Pago;
 use App\Models\Parametro;
 use App\Models\Prenda;
 use App\Models\Prestamo;
+use App\Models\SolicitudAprobacion;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -175,8 +177,38 @@ class PrestamoService
         foreach ($prendasRemate as $prenda) {
             $prenda->cambiarEstado('DISPONIBLE_REMATE', 'Periodo de gracia cumplido', null);
             $actualizados++;
+
+            $this->generarAvisoRematePendiente($prenda);
         }
 
         return $actualizados;
+    }
+
+    /**
+     * US-14: cuando el sistema genera el aviso de remate, queda pendiente de
+     * aprobación del administrador y NO se envía automáticamente.
+     */
+    private function generarAvisoRematePendiente(Prenda $prenda): void
+    {
+        $yaExiste = AvisoRemate::query()
+            ->where('id_prenda', $prenda->id_prenda)
+            ->where('aprobado', null)
+            ->exists();
+
+        if ($yaExiste) {
+            return;
+        }
+
+        AvisoRemate::create([
+            'id_prenda' => $prenda->id_prenda,
+            'aprobado' => null,
+        ]);
+
+        SolicitudAprobacion::create([
+            'tipo' => 'AVISO_REMATE',
+            'referencia_id' => $prenda->id_prenda,
+            'id_usuario_solicito' => null,
+            'estado' => 'PENDIENTE',
+        ]);
     }
 }

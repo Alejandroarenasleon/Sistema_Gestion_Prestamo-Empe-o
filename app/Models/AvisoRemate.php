@@ -15,6 +15,7 @@ class AvisoRemate extends Model
 
     protected $fillable = [
         'id_prenda',
+        'precio_ofertado',
         'fecha_solicitud',
         'aprobado',
         'id_usuario_aprobo',

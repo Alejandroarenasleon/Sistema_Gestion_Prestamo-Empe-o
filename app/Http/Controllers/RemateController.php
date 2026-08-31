@@ -22,8 +22,6 @@ class RemateController extends Controller
 
     public function index(): View
     {
-        // US-15: ordenar por antigüedad en gracia (préstamo vencido hace
-        // más tiempo primero), no por fecha de creación de la prenda.
         $prendas = Prenda::query()
             ->with(['prestamo.cliente', 'fotos'])
             ->where('estado', 'DISPONIBLE_REMATE')
@@ -41,9 +39,14 @@ class RemateController extends Controller
     {
         abort_unless($prenda->estado === 'DISPONIBLE_REMATE', 422, 'La prenda no está disponible para remate.');
 
-        DB::transaction(function () use ($prenda) {
+        $datos = $request->validate([
+            'precio_ofertado' => ['required', 'numeric', 'min:0.01'],
+        ]);
+
+        DB::transaction(function () use ($prenda, $datos) {
             AvisoRemate::create([
                 'id_prenda' => $prenda->id_prenda,
+                'precio_ofertado' => $datos['precio_ofertado'],
                 'aprobado' => null,
             ]);
 
@@ -61,27 +64,37 @@ class RemateController extends Controller
             $prenda->id_prenda,
             'MODIFICAR',
             ['estado' => 'DISPONIBLE_REMATE'],
-            ['solicitud_venta' => true],
+            ['solicitud_venta' => true, 'precio_ofertado' => $datos['precio_ofertado']],
         );
 
-        return back()->with('success', 'Solicitud de venta enviada para aprobación.');
+        return back()->with('success', 'Propuesta de venta enviada para aprobación del administrador.');
     }
 
     public function registrarVenta(Request $request, Prenda $prenda): RedirectResponse
     {
+        abort_unless($prenda->estado === 'DISPONIBLE_REMATE', 422, 'La prenda no está disponible para remate.');
+
+        $aprobacion = SolicitudAprobacion::query()
+            ->where('tipo', 'VENTA_PRENDA')
+            ->where('referencia_id', $prenda->id_prenda)
+            ->where('estado', 'APROBADO')
+            ->latest()
+            ->first();
+
+        abort_unless($aprobacion, 403, 'La venta requiere la aprobación del administrador.');
+
         $datos = $request->validate([
             'precio_venta' => ['required', 'numeric', 'min:0.01'],
             'comprador' => ['required', 'string', 'max:150'],
         ]);
 
-        abort_unless($prenda->estado === 'DISPONIBLE_REMATE', 422, 'La prenda no está disponible para remate.');
+        $adeudado = $prenda->prestamo->saldoTotal();
+        $resultado = round($datos['precio_venta'] - $adeudado, 2);
 
-        $saldoPrestamo = $prenda->prestamo->saldoCapital();
-        $resultado = $datos['precio_venta'] - $saldoPrestamo;
-
-        DB::transaction(function () use ($prenda, $datos, $resultado) {
+        DB::transaction(function () use ($prenda, $datos, $resultado, $adeudado) {
             Remate::create([
                 'id_prenda' => $prenda->id_prenda,
+                'categoria' => $prenda->categoria,
                 'precio_venta' => $datos['precio_venta'],
                 'comprador' => $datos['comprador'],
                 'resultado' => $resultado,
@@ -90,6 +103,11 @@ class RemateController extends Controller
             ]);
 
             $prenda->cambiarEstado('VENDIDA', 'Venta en remate registrada', Auth::id());
+
+            $prenda->prestamo->update([
+                'estado' => 'CANCELADO',
+                'activo' => false,
+            ]);
         });
 
         $this->auditoriaService->log(
@@ -98,11 +116,16 @@ class RemateController extends Controller
             $prenda->id_prenda,
             'CREAR',
             null,
-            $datos,
+            [
+                'precio_venta' => $datos['precio_venta'],
+                'adeudado' => $adeudado,
+                'resultado' => $resultado,
+                'categoria' => $prenda->categoria,
+            ],
         );
 
         return redirect()
             ->route('remates.index')
-            ->with('success', 'Venta en remate registrada correctamente.');
+            ->with('success', 'Venta en remate registrada. Resultado: Bs. ' . number_format($resultado, 2));
     }
 }

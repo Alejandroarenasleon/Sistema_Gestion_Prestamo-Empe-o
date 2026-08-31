@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Prenda;
 use App\Models\Prestamo;
+use App\Models\Remate;
 use App\Models\SolicitudAprobacion;
 use App\Services\CajaService;
 use Illuminate\View\View;
@@ -36,6 +37,7 @@ class DashboardController extends Controller
                 ->where('estado', 'DISPONIBLE_REMATE')
                 ->where('activo', true)
                 ->count(),
+            'resultadoRemates' => Remate::query()->sum('resultado'),
             'solicitudesPendientes' => SolicitudAprobacion::query()
                 ->where('estado', 'PENDIENTE')
                 ->count(),

@@ -5,12 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\Notificacion;
 use App\Models\PlantillaMensaje;
+use App\Models\Prestamo;
+use App\Services\NotificacionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class NotificacionController extends Controller
 {
+    public function __construct(
+        private NotificacionService $notificacionService,
+    ) {}
+
     public function index(Request $request): View
     {
         $notificaciones = Notificacion::query()
@@ -35,22 +41,20 @@ class NotificacionController extends Controller
         ]);
 
         $cliente = Cliente::findOrFail($datos['id_cliente']);
-        $plantilla = isset($datos['id_plantilla'])
-            ? PlantillaMensaje::find($datos['id_plantilla'])
-            : null;
+        $prestamo = isset($datos['id_prestamo']) ? Prestamo::find($datos['id_prestamo']) : null;
+        $plantilla = isset($datos['id_plantilla']) ? PlantillaMensaje::find($datos['id_plantilla']) : null;
 
-        Notificacion::create([
-            'id_cliente' => $cliente->id_cliente,
-            'id_prestamo' => $datos['id_prestamo'] ?? null,
-            'id_plantilla' => $plantilla?->id_plantilla,
-            'tipo' => $datos['tipo'],
-            'canal' => $datos['canal'],
-            'estado_envio' => 'EXITO',
-        ]);
+        $notificacion = $this->notificacionService->enviarSimulado(
+            $cliente,
+            $prestamo,
+            $plantilla,
+            $datos['canal'],
+            $datos['tipo'],
+        );
 
         return back()->with(
             'success',
-            "Notificación simulada enviada a {$cliente->nombre_completo} por {$datos['canal']}.",
+            "Notificación simulada enviada a {$cliente->nombre_completo} por {$notificacion->canal}.",
         );
     }
 }
