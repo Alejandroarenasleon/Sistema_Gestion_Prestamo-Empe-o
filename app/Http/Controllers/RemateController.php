@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AvisoRemate;
 use App\Models\Prenda;
+use App\Models\Prestamo;
 use App\Models\Remate;
 use App\Models\SolicitudAprobacion;
 use App\Services\AuditoriaService;
@@ -21,11 +22,16 @@ class RemateController extends Controller
 
     public function index(): View
     {
+        // US-15: ordenar por antigüedad en gracia (préstamo vencido hace
+        // más tiempo primero), no por fecha de creación de la prenda.
         $prendas = Prenda::query()
             ->with(['prestamo.cliente', 'fotos'])
             ->where('estado', 'DISPONIBLE_REMATE')
             ->where('activo', true)
-            ->orderByDesc('id_prenda')
+            ->orderBy(
+                Prestamo::select('fecha_vencimiento')
+                    ->whereColumn('prestamo.id_prestamo', 'prenda.id_prestamo')
+            )
             ->paginate(20);
 
         return view('remates.index', compact('prendas'));

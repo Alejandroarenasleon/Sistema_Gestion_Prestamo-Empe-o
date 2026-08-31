@@ -18,6 +18,7 @@
                     <th>Préstamo</th>
                     <th>Avalúo</th>
                     <th>Total Adeudado</th>
+                    <th>Mínimo Aceptable de Venta</th>
                     <th class="text-end">Acciones</th>
                 </tr>
             </thead>
@@ -38,6 +39,9 @@
                     </td>
                     <td>Bs. {{ number_format($prenda->avaluo, 2) }}</td>
                     <td class="fw-semibold text-danger">Bs. {{ number_format($adeudado, 2) }}</td>
+                    <td class="fw-semibold" title="Vender por debajo de este monto genera pérdida">
+                        Bs. {{ number_format($adeudado, 2) }}
+                    </td>
                     <td class="text-end">
                         <form method="POST" action="{{ route('remates.solicitar', $prenda) }}" class="d-inline">
                             @csrf
@@ -85,7 +89,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">No hay prendas disponibles para remate.</td>
+                    <td colspan="7" class="text-center text-muted py-4">No hay prendas disponibles para remate.</td>
                 </tr>
                 @endforelse
             </tbody>
