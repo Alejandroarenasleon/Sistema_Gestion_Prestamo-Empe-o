@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AvisoRemate;
 use App\Models\Prenda;
+use App\Models\Prestamo;
 use App\Models\Remate;
 use App\Models\SolicitudAprobacion;
 use App\Services\AuditoriaService;
@@ -25,7 +26,10 @@ class RemateController extends Controller
             ->with(['prestamo.cliente', 'fotos'])
             ->where('estado', 'DISPONIBLE_REMATE')
             ->where('activo', true)
-            ->orderBy('id_prenda')
+            ->orderBy(
+                Prestamo::select('fecha_vencimiento')
+                    ->whereColumn('prestamo.id_prestamo', 'prenda.id_prestamo')
+            )
             ->paginate(20);
 
         return view('remates.index', compact('prendas'));
@@ -70,7 +74,6 @@ class RemateController extends Controller
     {
         abort_unless($prenda->estado === 'DISPONIBLE_REMATE', 422, 'La prenda no está disponible para remate.');
 
-        // US-16: no se permite registrar la venta sin aprobación del administrador.
         $aprobacion = SolicitudAprobacion::query()
             ->where('tipo', 'VENTA_PRENDA')
             ->where('referencia_id', $prenda->id_prenda)
@@ -85,7 +88,6 @@ class RemateController extends Controller
             'comprador' => ['required', 'string', 'max:150'],
         ]);
 
-        // US-17: resultado = precio de venta - (capital + interés no pagado).
         $adeudado = $prenda->prestamo->saldoTotal();
         $resultado = round($datos['precio_venta'] - $adeudado, 2);
 
@@ -102,7 +104,6 @@ class RemateController extends Controller
 
             $prenda->cambiarEstado('VENDIDA', 'Venta en remate registrada', Auth::id());
 
-            // US-17: el préstamo asociado se cierra al concretarse el remate.
             $prenda->prestamo->update([
                 'estado' => 'CANCELADO',
                 'activo' => false,
